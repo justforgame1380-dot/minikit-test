@@ -3,12 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "next build && next export",
-  "start": "serve out",
-  "lint": "next lint"
-},
-
+    "dev": "next dev",
+    "build": "next build && next export",
+    "start": "serve out",
+    "lint": "next lint"
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
