@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 function withValidProperties(
   properties: Record<string, undefined | string | string[]>,
 ) {
