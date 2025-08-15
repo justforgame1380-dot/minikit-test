@@ -1,116 +1,68 @@
-"use client";
+'use client';
 
-import {
-  useMiniKit,
-  useAddFrame,
-  useOpenUrl,
-} from "@coinbase/onchainkit/minikit";
-import {
-  Name,
-  Identity,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { Button } from "./components/DemoComponents";
-import { Icon } from "./components/DemoComponents";
-import { Home } from "./components/DemoComponents";
-import { Features } from "./components/DemoComponents";
+import { useEffect, useState } from 'react';
 
-export default function App() {
-  const { setFrameReady, isFrameReady, context } = useMiniKit();
-  const [frameAdded, setFrameAdded] = useState(false);
-  const [activeTab, setActiveTab] = useState("home");
-
-  const addFrame = useAddFrame();
-  const openUrl = useOpenUrl();
+export default function Home() {
+  const [time, setTime] = useState(10);
+  const [score, setScore] = useState(0);
+  const [best, setBest] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const v = localStorage.getItem('bestScore');
+      return v ? parseInt(v) : 0;
+    }
+    return 0;
+  });
+  const [running, setRunning] = useState(false);
 
   useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady();
+    if (!running || time <= 0) return;
+    const id = setInterval(() => setTime((t) => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [running, time]);
+
+  useEffect(() => {
+    if (time === 0) {
+      setRunning(false);
+      if (score > best) {
+        setBest(score);
+        localStorage.setItem('bestScore', String(score));
+      }
     }
-  }, [setFrameReady, isFrameReady]);
+  }, [time, score, best]);
 
-  const handleAddFrame = useCallback(async () => {
-    const frameAdded = await addFrame();
-    setFrameAdded(Boolean(frameAdded));
-  }, [addFrame]);
-
-  const saveFrameButton = useMemo(() => {
-    if (context && !context.client.added) {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleAddFrame}
-          className="text-[var(--app-accent)] p-4"
-          icon={<Icon name="plus" size="sm" />}
-        >
-          Save Frame
-        </Button>
-      );
-    }
-
-    if (frameAdded) {
-      return (
-        <div className="flex items-center space-x-1 text-sm font-medium text-[#0052FF] animate-fade-out">
-          <Icon name="check" size="sm" className="text-[#0052FF]" />
-          <span>Saved</span>
-        </div>
-      );
-    }
-
-    return null;
-  }, [context, frameAdded, handleAddFrame]);
+  const start = () => {
+    setScore(0);
+    setTime(10);
+    setRunning(true);
+  };
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
-      <div className="w-full max-w-md mx-auto px-4 py-3">
-        <header className="flex justify-between items-center mb-3 h-11">
-          <div>
-            <div className="flex items-center space-x-2">
-              <Wallet className="z-10">
-                <ConnectWallet>
-                  <Name className="text-inherit" />
-                </ConnectWallet>
-                <WalletDropdown>
-                  <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                    <Avatar />
-                    <Name />
-                    <Address />
-                    <EthBalance />
-                  </Identity>
-                  <WalletDropdownDisconnect />
-                </WalletDropdown>
-              </Wallet>
-            </div>
-          </div>
-          <div>{saveFrameButton}</div>
-        </header>
+    <main style={{minHeight:'100vh',display:'grid',placeItems:'center',padding:'24px',fontFamily:'ui-sans-serif,system-ui'}}>
+      <div style={{maxWidth:420,width:'100%',textAlign:'center',border:'1px solid #e5e7eb',borderRadius:16,padding:24,boxShadow:'0 6px 24px rgba(0,0,0,0.06)'}}>
+        <h1 style={{fontSize:24,marginBottom:8}}>⚡ 10s Tap Challenge</h1>
+        <p style={{color:'#6b7280',marginBottom:16}}>بزن روی دکمه و تو ۱۰ ثانیه بیشترین امتیاز رو بگیر!</p>
 
-        <main className="flex-1">
-          {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
-          {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
-        </main>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
+          <span>⏱ زمان: <b>{time}s</b></span>
+          <span>🏁 امتیاز: <b>{score}</b></span>
+          <span>🥇 رکورد: <b>{best}</b></span>
+        </div>
 
-        <footer className="mt-2 pt-4 flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[var(--ock-text-foreground-muted)] text-xs"
-            onClick={() => openUrl("https://base.org/builders/minikit")}
-          >
-            Built on Base with MiniKit
-          </Button>
-        </footer>
+        <button
+          onClick={() => running && setScore((s) => s + 1)}
+          disabled={!running || time===0}
+          style={{width:'100%',padding:'20px 0',fontSize:20,fontWeight:700,borderRadius:12,border:'none',cursor:running?'pointer':'not-allowed',background:running?'#111827':'#9CA3AF',color:'#fff',marginBottom:12}}
+        >
+          TAP!
+        </button>
+
+        <button
+          onClick={start}
+          style={{width:'100%',padding:'12px 0',borderRadius:10,border:'1px solid #e5e7eb',background:'#fff',cursor:'pointer'}}
+        >
+          {running ? 'درحال بازی…' : 'شروع دوباره'}
+        </button>
       </div>
-    </div>
+    </main>
   );
 }
